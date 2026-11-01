@@ -1,7 +1,11 @@
 """Application stylesheet (modern, compact)."""
 
 QSS = """
-QMainWindow, QWidget { font-size: 12px; }
+QMainWindow, QWidget, QDialog { font-size: 10pt;
+    font-family: "Microsoft JhengHei UI", "Microsoft JhengHei", "Noto Sans CJK TC", "PingFang TC", sans-serif; }
+QLabel#Note { color: #546e7a; font-size: 9pt; }
+QLabel#Formula { color: #0d47a1; font-weight: bold; background: #e3f2fd; border-radius: 4px; padding: 3px; }
+QLabel#Warn { color: #b71c1c; font-size: 9pt; }
 QMainWindow { background: #f3f5f8; }
 QToolBar { background: #ffffff; border-bottom: 1px solid #d5dbe3; spacing: 4px; padding: 3px; }
 QToolButton { padding: 3px 6px; border-radius: 6px; }
@@ -16,7 +20,7 @@ QHeaderView::section { background: #eef2f7; border: none; border-right: 1px soli
 QPushButton { background: #eef2f7; border: 1px solid #ccd5e0; border-radius: 6px; padding: 3px 8px; }
 QPushButton:hover { background: #e1e9f4; }
 QPushButton#RunButton { background: qlineargradient(x1:0,y1:0,x2:0,y2:1, stop:0 #43b35b, stop:1 #2e9d46);
-    color: white; font-size: 17px; font-weight: bold; border: 1px solid #23803a; border-radius: 10px;
+    color: white; font-size: 14pt; font-weight: bold; border: 1px solid #23803a; border-radius: 10px;
     padding: 10px 14px; }
 QPushButton#RunButton:hover { background: #3aa852; }
 QPushButton#RunButton:pressed { background: #23803a; }

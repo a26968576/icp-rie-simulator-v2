@@ -62,9 +62,42 @@ def gan_rates(step: RecipeStep, coef: RateCoefficients):
     return ion / 60.0, chem / 60.0
 
 
-def material_rates(step, coef, materials, mask_material: str, selectivity: float):
-    """nm/s (ion, chem) per material name. Mask material rate = GaN rate / selectivity."""
+def material_rates(step, project, names=None):
+    """Per-material (ion, chem) etch rates in nm/s plus the rate-source Resolution.
+
+    Total rate per material comes from rate_sources.resolve (user experimental > literature >
+    mask-tab preset / DEMO factors). It is split into directional (ion) and isotropic (chem)
+    parts: the DEMO isotropic (chemical) rate is kept when the material has factors and the rest is
+    directional; materials without factors: masks 100 % directional, others 90 % directional."""
+    from . import rate_sources as rs
+    from .literature import get_active
+    p = project
+    coef = p.coefficients
     gi, gch = gan_rates(step, coef)
-    out = {name: (gi * m.ion_factor, gch * m.chem_factor) for name, m in materials.items()}
-    out[mask_material] = (gi / selectivity, gch / selectivity)
-    return out
+    names = list(names) if names is not None else list(p.materials)
+    demo, demo_chem = {}, {}
+    for n in names:
+        m = p.materials.get(n)
+        if m is not None and m.has_physics:
+            i, c = gi * m.ion_factor, gch * m.chem_factor
+            demo[n] = (i + c) * 60.0
+            demo_chem[n] = c
+    calibrated = {}
+    if coef.calibrated and "GaN" in demo:
+        calibrated["GaN"] = demo.pop("GaN")
+    lit = get_active() if getattr(p.settings, "use_literature", True) else None
+    top = p.stack.layers[-1].material if p.stack.layers else None
+    res = rs.resolve(names, step.gases_sccm, p.user_rates, lit, demo, calibrated,
+                     p.mask.material, top, p.mask.selectivity)
+    out = {}
+    for n in names:
+        r = (res.rates[n].rate_nm_min or 0.0) / 60.0
+        m = p.materials.get(n)
+        if n in demo_chem:                       # keep DEMO isotropic part, rest is directional
+            c = min(demo_chem[n], r)
+        elif m is not None and m.is_mask:
+            c = 0.0
+        else:
+            c = 0.1 * r
+        out[n] = (r - c, c)
+    return out, res

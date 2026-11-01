@@ -18,6 +18,7 @@ import numpy as np
 from ..core import labels
 from ..core.frames import Frame, SimResult
 from ..core.recipe import material_rates
+from ..core.rate_sources import rate_meta
 
 try:  # pragma: no cover - depends on environment
     import viennaps as _vps
@@ -114,12 +115,16 @@ class ViennaPSBackend:
         n = max(2, p.settings.n_frames)
         times = np.linspace(0, total, n)
         frames = []
+        used_names = list(dict.fromkeys([l.material for l in p.stack.layers] + [p.mask.material]))
+        rcache = {}
         segs, nodes = self._surface(dom)
         frames.append(Frame(0.0, segs, None, self._depths(nodes, ytop * 1e3)))
         for k in range(1, n):
             t0, t1 = times[k - 1], times[k]
             step = p.recipe.step_at(0.5 * (t0 + t1))
-            rates = material_rates(step, p.coefficients, p.materials, p.mask.material, p.mask.selectivity)
+            if id(step) not in rcache:
+                rcache[id(step)] = material_rates(step, p, used_names)
+            rates = rcache[id(step)][0]
             # nm/s -> um/s ; with direction (0,-1,0) POSITIVE rates remove material (verified on viennaps 4.7)
             mrates = {}
             for name, m in used.items():
@@ -131,13 +136,16 @@ class ViennaPSBackend:
             frames.append(Frame(float(t1), segs, None, self._depths(nodes, ytop * 1e3)))
             if progress:
                 progress(k / (n - 1))
-        lab = labels.label_for("viennaps", p.coefficients.calibrated)
+        rmeta = rate_meta([v[1] for v in rcache.values()], used_names)
+        prov = rmeta["rate_sources"]
+        lab = labels.label_for("viennaps", p.coefficients.calibrated, prov)
         names = ["gas"] + [l.material for l in p.stack.layers] + [p.mask.material]
         ext = (0.0, p.mask.domain_width_nm, 0.0,
                p.stack.total_thickness + p.mask.thickness_nm + p.settings.gas_headroom_nm)
         return SimResult(frames, lab, names, ext, {"backend": "viennaps",
                                                    "viennaps_version": str(getattr(_vps, "__version__", "?")),
-                                                   "material_tags": {k: str(v) for k, v in used.items()}})
+                                                   "material_tags": {k: str(v) for k, v in used.items()},
+                                                   "used_materials": used_names, **rmeta})
 
     def _depths(self, nodes, ytop_nm):
         out = {}

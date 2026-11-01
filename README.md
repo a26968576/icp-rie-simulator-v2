@@ -54,3 +54,16 @@ pip install -r requirements.txt
 python run_app.py            # or: python -m icpsim.app.main
 set QT_QPA_PLATFORM=offscreen && python -m pytest -q
 ```
+
+## Rate sources, literature DB, selectivity (V2.1)
+- UI is Traditional Chinese with English in parentheses; toolbar `English` toggles, or start with `python -m app.main --en`.
+- Gases CF4, O2, Ar, BCl3, Cl2, N2 with quick-add buttons.
+- Add materials (e.g. 光阻1, PDMS) without physical factors. Per chemistry, give either an absolute experimental rate
+  (Å/s, nm/min, µm/min) or a selectivity `S = R_target / R_mask` vs a reference (30 Å/s resist, 100 Å/s PDMS → 3.33).
+- Priority: user experimental > literature (median of enabled entries matching the recipe's gas set) > demo factors.
+  Chains are propagated, cycles checked for consistency, missing data warned. Selectivity matrix view; library JSON save/load.
+- Literature DB (`icpsim/data/literature_db.json`, 44 entries / 13 sources, all cited with conditions) is editable in
+  the Advanced tab; edits saved to `~/.icp_rie_sim/literature_db.json`.
+- Labels: EXPERIMENTAL_INPUT / LITERATURE_BASED (and VIENNAPS_* variants) in addition to DEMO / CALIBRATED.
+- Limitations: experimental/literature rates are fixed and do not scale with power/pressure; profile shape is still the
+  demo model; no SEM overlay or parameter sweep.

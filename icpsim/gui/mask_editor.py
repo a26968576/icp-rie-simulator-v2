@@ -1,6 +1,7 @@
 """Mask material / thickness / selectivity and openings (center, CD) - all lengths in um."""
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout, QComboBox, QDoubleSpinBox, QLabel
 from ..core.mask import MaskGeometry, Opening
+from ..i18n import tr
 from .widgets import make_table, set_rows, get_rows, add_remove_bar
 
 
@@ -25,16 +26,22 @@ class MaskPanel(QWidget):
         g.setHorizontalSpacing(6)
         g.setVerticalSpacing(3)
         self.material = QComboBox()
-        self.thickness = spin(0.001, 100, 0.5, 3, "um")
-        self.width = spin(0.1, 1000, 6.0, 3, "um")
+        self.thickness = spin(0.001, 100, 0.5, 3, "µm")
+        self.width = spin(0.1, 1000, 6.0, 3, "µm")
         self.selectivity = spin(0.01, 1e4, 6.0, 2)
-        g.addWidget(QLabel("Mask"), 0, 0); g.addWidget(self.material, 0, 1)
-        g.addWidget(QLabel("Thick."), 0, 2); g.addWidget(self.thickness, 0, 3)
-        g.addWidget(QLabel("Domain W"), 1, 0); g.addWidget(self.width, 1, 1)
-        g.addWidget(QLabel("Sel. GaN:mask"), 1, 2); g.addWidget(self.selectivity, 1, 3)
+        self.selectivity.setToolTip(tr("mask_sel_tip"))
+        self.thickness.setToolTip(tr("mask_thickness"))
+        rows = [("mask_material", self.material), ("mask_thickness", self.thickness),
+                ("domain_width", self.width), ("mask_sel", self.selectivity)]
+        for i, (k, w) in enumerate(rows):
+            lab = QLabel(tr(k))
+            lab.setToolTip(w.toolTip() or tr(k))
+            g.addWidget(lab, i, 0)
+            g.addWidget(w, i, 1)
+        g.setColumnStretch(1, 1)
         v.addLayout(g)
-        v.addWidget(QLabel("Openings / CD (um)"))
-        self.table = make_table(["Center (um)", "CD (um)"], max_rows=3)
+        v.addWidget(QLabel(tr("openings")))
+        self.table = make_table([tr("hdr_center"), tr("hdr_cd")], max_rows=3)
         v.addWidget(self.table)
         v.addWidget(add_remove_bar(self._add, self._remove))
 

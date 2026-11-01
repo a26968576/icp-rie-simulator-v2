@@ -9,7 +9,7 @@ These proxies are NOT a plasma model; they only give plausible trends:
 from __future__ import annotations
 import math
 
-KNOWN_GASES = ["Cl2", "BCl3", "Ar", "N2", "SF6", "O2", "CHF3", "HBr"]
+KNOWN_GASES = ["CF4", "O2", "Ar", "BCl3", "Cl2", "N2", "SF6", "CHF3", "HBr"]
 
 
 def chlorine_index(gases: dict) -> float:

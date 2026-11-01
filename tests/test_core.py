@@ -28,8 +28,11 @@ def test_rates_trends():
 
 def test_selectivity():
     p = gan_preset()
-    r = material_rates(p.recipe.steps[0], p.coefficients, p.materials, "SiO2", 5.0)
+    p.settings.use_literature = False
+    p.mask.selectivity = 5.0
+    r, res = material_rates(p.recipe.steps[0], p)
     assert sum(r["GaN"]) / sum(r["SiO2"]) == pytest.approx(5.0)
+    assert res.rates["SiO2"].source == "preset" and res.rates["GaN"].source == "demo"
 
 
 def test_mask_validation():

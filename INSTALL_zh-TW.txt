@@ -8,6 +8,9 @@ ICP-RIE Simulator V2 安裝與使用說明（Windows，Python 3.10–3.12）
                           僅在校正時使用的 Recipe 附近有效。
   VIENNAPS_UNCALIBRATED ：使用 ViennaPS level-set 引擎演化表面，但蝕刻速率仍為未校正示範係數。
   VIENNAPS_CALIBRATED   ：ViennaPS 幾何演化 + 已校正速率係數。
+  EXPERIMENTAL_INPUT    ：蝕刻速率來自使用者輸入的實驗值（絕對速率或選擇比）；輪廓形狀仍為示範模型。
+  LITERATURE_BASED      ：蝕刻速率來自內建文獻資料庫（中位數）；輪廓形狀仍為示範模型。
+  （ViennaPS 後端對應 VIENNAPS_EXPERIMENTAL_INPUT / VIENNAPS_LITERATURE_BASED。）
 請勿將 DEMO 數值當作製程預測結果。
 
 【最簡單方式：雙擊安裝，不需要打指令】
@@ -95,3 +98,24 @@ ICP-RIE Simulator V2 安裝與使用說明（Windows，Python 3.10–3.12）
          --collect-submodules icpsim run_app.py
   若包含 ViennaPS：加上  --collect-all viennaps --collect-all viennals
   產出位於 dist\ICP-RIE-Simulator-V2\ 。
+
+
+八、蝕刻速率來源、文獻資料庫與選擇比（V2.1 新增）
+  1. 介面為繁體中文「中文 (English)」；工具列「English」按鈕可切換英文，或以 python -m app.main --en 啟動。
+  2. 氣體：CF4、O2、Ar、BCl3、Cl2、N2，配方表下方有快速加入按鈕。
+  3. 「材料與蝕刻率」分頁：
+     - 「+ 新增材料」可新增 光阻1、PDMS、膠材… 等，不需填物理參數（離子/化學因子可留空）。
+     - 「實驗蝕刻率 / 選擇比」表：每列一筆實驗值，可填
+         蝕刻率 (rate)：數值 + 單位（Å/s、nm/min、µm/min）
+         選擇比 (selectivity)：S = R_目標 / R_光罩（相對參考材料）
+       例：光阻 30 Å/s、PDMS 100 Å/s → S(PDMS:光阻) = 100/30 = 3.33。
+       「氣體化學」欄填 * 表示所有配方，或填氣體組合（例 O2/CF4）。
+     - 選擇比鏈會自動推算（A→B→C），循環會檢查一致性，缺資料時顯示警告並視為不蝕刻。
+     - 「選擇比矩陣」顯示目前配方下各材料互相的選擇比；材料庫可存/讀 JSON。
+  4. 優先順序：使用者實驗值 > 文獻值 > DEMO 因子。實驗值與文獻值只要有一種即可。
+     「製程」分頁下方「蝕刻速率來源」表會顯示每個材料實際使用的來源。
+  5. 「進階」分頁可編輯文獻資料庫（44 筆，13 篇來源，每筆含作者/標題/年份/DOI 或網址與製程條件）。
+     儲存後寫入 %USERPROFILE%\.icp_rie_sim\literature_db.json，可「還原內建」。
+     文獻值依配方中流量 > 0 的氣體組合比對，取已啟用條目的中位數；非 ICP 條目預設停用。
+  6. 限制：實驗值與文獻值為固定速率，不會隨功率、壓力變化；輪廓形狀仍由示範模型決定；
+     文獻條件與您的機台不同時僅供參考。本版不含 SEM 疊圖與參數掃描。

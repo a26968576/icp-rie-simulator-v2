@@ -19,6 +19,7 @@ import numpy as np
 from ..core import labels
 from ..core.frames import Frame, SimResult
 from ..core.recipe import material_rates
+from ..core.rate_sources import rate_meta
 from ..extensions.arde import arde_factor, gas_run_widths
 from ..extensions.loading import loading_factor
 
@@ -121,12 +122,16 @@ class DemoModel:
         load = loading_factor(s.wafer_open_fraction, s.loading_beta) if s.enable_loading else 1.0
         mask_top = self.ytop + p.mask.thickness_nm
 
+        used_names = list(dict.fromkeys([l.material for l in p.stack.layers] + [p.mask.material]))
+        rcache = {}
         frames = [Frame(0.0, self.surface_lines(grid, health), grid.copy(), self.depths(grid, health))]
         t = 0.0
         fi = 1
         while fi < n:
             step = p.recipe.step_at(min(t, total - 1e-9))
-            rates = material_rates(step, p.coefficients, p.materials, p.mask.material, p.mask.selectivity)
+            if id(step) not in rcache:
+                rcache[id(step)] = material_rates(step, p, used_names)
+            rates = rcache[id(step)][0]
             R_ion = np.zeros(len(self.names))
             R_chem = np.zeros(len(self.names))
             for name, (ri, rc) in rates.items():
@@ -169,11 +174,13 @@ class DemoModel:
                 fi += 1
                 if progress:
                     progress(fi / n)
-        lab = labels.label_for("demo", p.coefficients.calibrated)
+        rmeta = rate_meta([v[1] for v in rcache.values()], used_names)
+        prov = rmeta["rate_sources"]
+        lab = labels.label_for("demo", p.coefficients.calibrated, prov)
         return SimResult(frames, lab, self.names, (0.0, p.mask.domain_width_nm, 0.0, self.H),
                          {"backend": "demo", "grid_nm": dx, "loading_factor": load,
                           "arde": s.enable_arde,
-                          "used_materials": [l.material for l in p.stack.layers] + [p.mask.material], "mask_top_nm": mask_top, "semiconductor_top_nm": self.ytop})
+                          "used_materials": used_names, **rmeta, "mask_top_nm": mask_top, "semiconductor_top_nm": self.ytop})
 
 
 def run_project(project, progress=None) -> SimResult:

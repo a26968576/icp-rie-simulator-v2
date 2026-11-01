@@ -3,6 +3,7 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QLabel, QPlainTextEdit, QFileDialog,
                                QSpinBox, QHBoxLayout)
 from ..calibration import fit as cal
+from ..i18n import tr
 
 
 class CalibrationPanel(QWidget):
@@ -14,18 +15,20 @@ class CalibrationPanel(QWidget):
         self.result = None
         self.path = ""
         v = QVBoxLayout(self)
-        v.addWidget(QLabel("CSV columns: time_s, depth_nm [, cd_nm]  (see examples/gan_experiment_example.csv)"))
+        v.setContentsMargins(0, 0, 0, 0)
+        v.addWidget(QLabel(tr("cal_note")))
         h = QHBoxLayout()
-        h.addWidget(QLabel("Recipe step #"))
+        h.addWidget(QLabel(tr("cal_step")))
         self.step = QSpinBox()
         self.step.setRange(1, 99)
         h.addWidget(self.step)
         v.addLayout(h)
-        self.load_btn = QPushButton("Load CSV and fit...")
-        self.apply_btn = QPushButton("Apply calibration (results become CALIBRATED)")
-        self.reset_btn = QPushButton("Reset to DEMO coefficients")
+        self.load_btn = QPushButton(tr("cal_load"))
+        self.apply_btn = QPushButton(tr("cal_apply"))
+        self.reset_btn = QPushButton(tr("cal_reset"))
         self.text = QPlainTextEdit()
         self.text.setReadOnly(True)
+        self.text.setMaximumHeight(110)
         for w in (self.load_btn, self.apply_btn, self.reset_btn, self.text):
             v.addWidget(w)
         self.load_btn.clicked.connect(self._load)

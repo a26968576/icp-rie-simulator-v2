@@ -5,6 +5,11 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from matplotlib.colors import ListedColormap
 from matplotlib.figure import Figure
 from ..core import labels
+from ..i18n import tr
+import matplotlib
+matplotlib.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'Noto Sans CJK TC', 'PingFang TC',
+                                          'DejaVu Sans']
+matplotlib.rcParams['axes.unicode_minus'] = False
 
 UM = 1e-3  # nm -> um
 
@@ -28,7 +33,8 @@ def draw_frame(ax, result, frame, materials, title, before=None):
     ax.set_ylabel("y (µm)")
     ax.set_title(title, fontsize=9)
     if not labels.is_calibrated(result.label):
-        ax.text(0.5, 0.5, "DEMO / UNCALIBRATED\nillustrative only", transform=ax.transAxes, ha="center",
+        wm = "LITERATURE-BASED\nrough guide only" if "LITERATURE" in result.label else "DEMO / UNCALIBRATED\nillustrative only"
+        ax.text(0.5, 0.5, wm, transform=ax.transAxes, ha="center",
                 va="center", fontsize=13, color="red", alpha=0.25, rotation=20, weight="bold")
 
 
@@ -72,7 +78,7 @@ class ProfileView(FigureCanvasQTAgg):
                 continue
             ax.clear()
             ax.set_xticks([]); ax.set_yticks([])
-            ax.text(0.5, 0.5, "Press  ▶ RUN SIMULATION", ha="center", va="center", transform=ax.transAxes,
+            ax.text(0.5, 0.5, tr("placeholder"), ha="center", va="center", transform=ax.transAxes,
                     fontsize=14, color="#2e9d46", weight="bold")
         self.fig.suptitle("")
         self.draw_idle()
@@ -93,12 +99,16 @@ class ProfileView(FigureCanvasQTAgg):
         self.index = i
         f0, f = r.frames[0], r.frames[i]
         if self.ax_before is not None:
-            draw_frame(self.ax_before, r, f0, self.materials, "BEFORE  t = 0 s")
+            draw_frame(self.ax_before, r, f0, self.materials, f"{tr('before')}  t = 0 s")
         depth = ", ".join(f"#{k + 1}: {v * UM:.3f} µm" for k, v in f.depth_nm.items())
-        draw_frame(self.ax_after, r, f, self.materials, f"AFTER  t = {f.time_s:.1f} s   depth {depth}",
+        draw_frame(self.ax_after, r, f, self.materials, f"{tr('after')}  t = {f.time_s:.1f} s   {tr('depth')} {depth}",
                    before=f0 if self.overlay else None)
         h = legend_handles(r, self.materials)
         if h:
             self.ax_after.legend(handles=h, loc="lower right", fontsize=7, framealpha=0.85)
-        self.fig.suptitle(f"[{r.label}] {labels.TEXT[r.label]}", fontsize=8, color=labels.COLOR[r.label])
+        sup = f"[{r.label}] {labels.text(r.label).split(' - ')[0]}"
+        prov = r.meta.get("rate_sources")
+        if prov:
+            sup += "\n" + tr("rates_label") + ": " + labels.provenance_text_lang(prov)
+        self.fig.suptitle(sup, fontsize=8, color=labels.COLOR[r.label], wrap=True)
         self.draw_idle()

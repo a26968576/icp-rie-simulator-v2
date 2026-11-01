@@ -1,0 +1,121 @@
+ICP-RIE Simulator V2 安裝與使用說明（Windows，Python 3.10–3.12）
+====================================================================
+
+【重要：結果來源標示】
+本軟體所有結果都會標示模型來源（GUI 頂端色條、圖表標題與浮水印、CSV 檔頭、PNG metadata、專案 JSON）：
+  DEMO                  ：示範模型。經驗式、「未校正」、僅供示意，數值不代表物理真實。
+  CALIBRATED            ：示範輪廓模型 + 以使用者實驗數據（蝕刻深度 vs 時間）擬合之速率係數。
+                          僅在校正時使用的 Recipe 附近有效。
+  VIENNAPS_UNCALIBRATED ：使用 ViennaPS level-set 引擎演化表面，但蝕刻速率仍為未校正示範係數。
+  VIENNAPS_CALIBRATED   ：ViennaPS 幾何演化 + 已校正速率係數。
+  EXPERIMENTAL_INPUT    ：蝕刻速率來自使用者輸入的實驗值（絕對速率或選擇比）；輪廓形狀仍為示範模型。
+  LITERATURE_BASED      ：蝕刻速率來自內建文獻資料庫（中位數）；輪廓形狀仍為示範模型。
+  （ViennaPS 後端對應 VIENNAPS_EXPERIMENTAL_INPUT / VIENNAPS_LITERATURE_BASED。）
+請勿將 DEMO 數值當作製程預測結果。
+
+【最簡單方式：雙擊安裝，不需要打指令】
+  1. 安裝 Python 3.12（64 位元），安裝第一頁務必勾選「Add python.exe to PATH」。
+  2. 將本專案 ZIP 解壓縮（右鍵 → 全部解壓縮），建議放在 C:\icp_rie_sim_v2。
+  3. 雙擊 install.bat：自動建立 .venv、升級 pip、安裝套件；ViennaPS 為選用，失敗不影響使用（自動改用 DEMO 模型）。
+     公司網路需要 Proxy 時：在資料夾內新增 proxy.txt，第一行寫 Proxy 位址（例 http://proxy.company.com:8080），再雙擊 install.bat。
+  4. 之後每次使用：雙擊 run.bat。
+  （以下第一～三節為手動指令方式，熟悉命令列者再參考。）
+
+一、建立虛擬環境（venv）
+  1. 安裝 Python 3.10、3.11 或 3.12（64 位元），安裝時勾選「Add python.exe to PATH」。
+  2. 開啟「命令提示字元」或 PowerShell，進入專案資料夾，例如：
+       cd C:\icp_rie_sim_v2
+  3. 建立並啟用 venv：
+       py -3.11 -m venv .venv
+       .venv\Scripts\activate          （PowerShell：.venv\Scripts\Activate.ps1）
+     若 PowerShell 禁止執行腳本：Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+  4. 升級 pip：
+       python -m pip install --upgrade pip
+
+二、安裝相依套件
+       pip install -r requirements.txt
+  （PySide6、matplotlib、numpy、contourpy、pytest）
+
+三、執行程式
+       python run_app.py
+  或   python -m icpsim.app.main
+  單位：所有長度（膜厚、遮罩厚度、CD、開口位置、蝕刻深度、圖表座標、CSV 輸出）皆為 µm（um）；
+        速率顯示為 µm/min。專案 JSON（第 3 版）長度欄位為 *_um；舊版（nm）JSON 仍可直接開啟。
+  介面配置（左側「Process」分頁，由上而下）：
+   ① Mask & materials：遮罩材料、遮罩厚度、選擇比 GaN:mask、開口中心與 CD、膜層（由上而下列出）與厚度。
+   ② Gas species & flows：所選 Recipe 步驟之氣體種類與流量（sccm），可快速加入 Cl2/BCl3/Ar/N2。
+   ③ Main recipe：ICP 功率、RF Bias、壓力、溫度、時間，可多步驟。
+   下方綠色大按鈕「▶ RUN SIMULATION」（或 F5）執行模擬；「Reset」清除結果。
+  「Advanced」分頁：模型後端（DEMO / ViennaPS）、ARDE 與 Loading、實驗校正、材料庫。
+  上方工具列（圖示）：Presets（GaN/SiO2、GaN/PR）、Open、Save、Run、Stop、Reset、Before/After 切換、
+   Export PNG / CSV / JSON。
+  右側：左圖 Before（t=0）、右圖 After；時間軸 ▶ 播放 / ❚❚ 暫停，或拖曳滑桿瀏覽輪廓演化。
+  執行測試（無視窗模式）：
+       set QT_QPA_PLATFORM=offscreen
+       python -m pytest -q
+
+四、實驗速率校正
+  CSV 格式（第一列為欄名，# 開頭為註解）：
+       time_s,depth_um
+       30,0.210
+       60,0.405
+  （亦接受 depth_nm / cd_nm 欄名，單位 nm。）
+  若加入 cd_um 欄並含兩種以上 CD，會同時擬合 ARDE 係數 alpha。
+  範例：examples\gan_experiment_example.csv（合成數據，僅示範格式）。
+  於 Calibration 分頁「Load CSV and fit」→「Apply calibration」→ 重新執行模擬，標示會變為 CALIBRATED。
+
+五、由 .txt 還原為 .py 原始碼
+  txt_sources\ 內每個檔名以「__」代表資料夾分隔，例如：
+       icpsim__gui__main_window.py.txt   →   icpsim\gui\main_window.py
+       tests__test_core.py.txt           →   tests\test_core.py
+       run_app.py.txt                    →   run_app.py
+  還原步驟：去掉結尾 .txt，並把「__」換成資料夾「\」放到對應位置。
+  PowerShell 一鍵還原（於含 txt_sources 的資料夾執行，輸出到 restored\）：
+       Get-ChildItem txt_sources\*.txt | ForEach-Object {
+         $rel = $_.Name -replace '\.txt$',''
+         $rel = $rel -replace '__init__','INITPH' -replace '__','\' -replace 'INITPH','__init__'
+         New-Item -ItemType Directory -Force -Path (Split-Path ".\restored\$rel") | Out-Null
+         Copy-Item $_.FullName ".\restored\$rel" }
+  （__init__.py 例：icpsim__gui____init__.py.txt → icpsim\gui\__init__.py，腳本已處理。）
+  還原後資料夾結構：
+       run_app.py, make_screenshot.py, requirements.txt, pytest.ini
+       icpsim\__init__.py
+       icpsim\app\  icpsim\gui\  icpsim\core\  icpsim\models\
+       icpsim\extensions\  icpsim\calibration\  icpsim\io\    （每個資料夾都需要 __init__.py）
+       tests\  examples\
+  zip 檔內也附有原始 .py 檔，可直接使用。
+
+六、選用：安裝 ViennaPS（物理 level-set 後端）
+       pip install viennaps
+  安裝成功後於 Simulation 分頁 Backend 選「ViennaPS level-set」。
+  若未安裝或執行失敗，程式會自動退回 DEMO 模型，並於頂端標示原因。
+  目前整合：2D 網域、膜層堆疊、遮罩開口，使用 ViennaPS DirectionalProcess（方向性離子 + 等向化學分量）。
+  已於 viennaps 4.7.0 驗證；其他版本 API 可能不同。
+
+七、PyInstaller 打包提示
+       pip install pyinstaller
+       pyinstaller --noconfirm --windowed --name ICP-RIE-Simulator-V2 ^
+         --collect-submodules icpsim run_app.py
+  若包含 ViennaPS：加上  --collect-all viennaps --collect-all viennals
+  產出位於 dist\ICP-RIE-Simulator-V2\ 。
+
+
+八、蝕刻速率來源、文獻資料庫與選擇比（V2.1 新增）
+  1. 介面為繁體中文「中文 (English)」；工具列「English」按鈕可切換英文，或以 python -m app.main --en 啟動。
+  2. 氣體：CF4、O2、Ar、BCl3、Cl2、N2，配方表下方有快速加入按鈕。
+  3. 「材料與蝕刻率」分頁：
+     - 「+ 新增材料」可新增 光阻1、PDMS、膠材… 等，不需填物理參數（離子/化學因子可留空）。
+     - 「實驗蝕刻率 / 選擇比」表：每列一筆實驗值，可填
+         蝕刻率 (rate)：數值 + 單位（Å/s、nm/min、µm/min）
+         選擇比 (selectivity)：S = R_目標 / R_光罩（相對參考材料）
+       例：光阻 30 Å/s、PDMS 100 Å/s → S(PDMS:光阻) = 100/30 = 3.33。
+       「氣體化學」欄填 * 表示所有配方，或填氣體組合（例 O2/CF4）。
+     - 選擇比鏈會自動推算（A→B→C），循環會檢查一致性，缺資料時顯示警告並視為不蝕刻。
+     - 「選擇比矩陣」顯示目前配方下各材料互相的選擇比；材料庫可存/讀 JSON。
+  4. 優先順序：使用者實驗值 > 文獻值 > DEMO 因子。實驗值與文獻值只要有一種即可。
+     「製程」分頁下方「蝕刻速率來源」表會顯示每個材料實際使用的來源。
+  5. 「進階」分頁可編輯文獻資料庫（44 筆，13 篇來源，每筆含作者/標題/年份/DOI 或網址與製程條件）。
+     儲存後寫入 %USERPROFILE%\.icp_rie_sim\literature_db.json，可「還原內建」。
+     文獻值依配方中流量 > 0 的氣體組合比對，取已啟用條目的中位數；非 ICP 條目預設停用。
+  6. 限制：實驗值與文獻值為固定速率，不會隨功率、壓力變化；輪廓形狀仍由示範模型決定；
+     文獻條件與您的機台不同時僅供參考。本版不含 SEM 疊圖與參數掃描。

@@ -2,6 +2,7 @@
 from PySide6.QtCore import Qt, Signal, QTimer, QSize
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QSlider, QLabel, QToolButton, QStyle
 from . import icons
+from ..i18n import tr
 
 
 class TimelineSlider(QWidget):
@@ -13,13 +14,13 @@ class TimelineSlider(QWidget):
         h.setContentsMargins(4, 2, 4, 2)
         self.play_btn = QToolButton()
         self.play_btn.setIconSize(QSize(26, 26))
-        self.play_btn.setToolTip("Play / pause profile evolution")
+        self.play_btn.setToolTip(tr("play_tip"))
         self.first = QToolButton(); self.first.setIcon(self.style().standardIcon(QStyle.SP_MediaSkipBackward))
         self.last = QToolButton(); self.last.setIcon(self.style().standardIcon(QStyle.SP_MediaSkipForward))
-        self.first.setToolTip("First frame (before)"); self.last.setToolTip("Last frame (after)")
+        self.first.setToolTip(tr("first_tip")); self.last.setToolTip(tr("last_tip"))
         self.slider = QSlider(Qt.Horizontal)
         self.label = QLabel("t = 0.0 s")
-        self.label.setMinimumWidth(170)
+        self.label.setMinimumWidth(230)
         for w in (self.play_btn, self.first, self.slider, self.last, self.label):
             h.addWidget(w)
         self.timer = QTimer(self)
@@ -71,5 +72,5 @@ class TimelineSlider(QWidget):
 
     def _changed(self, i):
         if self.times:
-            self.label.setText(f"frame {i + 1}/{len(self.times)}   t = {self.times[i]:.1f} s")
+            self.label.setText(f"{tr('frame')} {i + 1}/{len(self.times)}   t = {self.times[i]:.1f} s")
         self.frameChanged.emit(i)

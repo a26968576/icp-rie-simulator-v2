@@ -1,0 +1,6 @@
+# Example (synthetic) GaN depth-vs-time data, micrometers - format demonstration only
+time_s,depth_um
+30,0.210
+60,0.405
+120,0.800
+180,1.190

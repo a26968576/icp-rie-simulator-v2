@@ -45,6 +45,10 @@ examples/                  example calibration CSV
 ```
 
 ## Run
+Windows, no typing: double-click `install.bat` once (creates `.venv`, installs requirements, tries optional ViennaPS;
+put a proxy URL in `proxy.txt` if your network needs one), then double-click `run.bat`.
+
+Manual:
 ```
 pip install -r requirements.txt
 python run_app.py            # or: python -m icpsim.app.main

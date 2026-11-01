@@ -10,6 +10,14 @@ ICP-RIE Simulator V2 安裝與使用說明（Windows，Python 3.10–3.12）
   VIENNAPS_CALIBRATED   ：ViennaPS 幾何演化 + 已校正速率係數。
 請勿將 DEMO 數值當作製程預測結果。
 
+【最簡單方式：雙擊安裝，不需要打指令】
+  1. 安裝 Python 3.12（64 位元），安裝第一頁務必勾選「Add python.exe to PATH」。
+  2. 將本專案 ZIP 解壓縮（右鍵 → 全部解壓縮），建議放在 C:\icp_rie_sim_v2。
+  3. 雙擊 install.bat：自動建立 .venv、升級 pip、安裝套件；ViennaPS 為選用，失敗不影響使用（自動改用 DEMO 模型）。
+     公司網路需要 Proxy 時：在資料夾內新增 proxy.txt，第一行寫 Proxy 位址（例 http://proxy.company.com:8080），再雙擊 install.bat。
+  4. 之後每次使用：雙擊 run.bat。
+  （以下第一～三節為手動指令方式，熟悉命令列者再參考。）
+
 一、建立虛擬環境（venv）
   1. 安裝 Python 3.10、3.11 或 3.12（64 位元），安裝時勾選「Add python.exe to PATH」。
   2. 開啟「命令提示字元」或 PowerShell，進入專案資料夾，例如：
